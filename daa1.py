@@ -1,7 +1,7 @@
 
 # Fibonacci using Recursive and Non-Recursive Methods
 
-# Non-recursive method
+#Non-recursive method
 def fibonacci_non_recursive(n):
     a, b = 0, 1
 
@@ -12,7 +12,7 @@ def fibonacci_non_recursive(n):
     print()
 
 
-# Recursive method
+#Recursive method
 def fibonacci_recursive(n):
     if n <= 1:
         return n
@@ -20,7 +20,8 @@ def fibonacci_recursive(n):
     return fibonacci_recursive(n - 1) + fibonacci_recursive(n - 2)
 
 
-n = int(input("Enter the number of terms: "))
+n = int(input("Enter position: "))
+print("Fibonacci number:", fibonacci_recursive(n - 1))
 
 if n <= 0:
     print("Please enter a positive integer.")
