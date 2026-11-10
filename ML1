@@ -64,10 +64,10 @@ data = treat_outliers_all(data, data.iloc[:, 0::])
 data.plot(kind="box", subplots=True, layout=(7,2), figsize=(15,20))
 
 # 3 check correlation
-corr = data.corr()
-corr
-
-sns.heatmap(data.corr(), annot=True)  # Correlation Heatmap (Light values means highly correlated)
+corr = data.corr(numeric_only=True)
+plt.figure(figsize=(12,8))
+sns.heatmap(corr,annot=True,cmap="Blues", fmt='.2f')
+plt.show()
 
 from math import *
 
