@@ -1,362 +1,75 @@
-
 import pandas as pd
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
-
-%matplotlib inline
-
-import warnings
-warnings.filterwarnings('ignore')
-
+import seaborn as sns
 from sklearn.model_selection import train_test_split
-from sklearn.svm import SVC
-from sklearn import metrics
-
-df = pd.read_csv('emails.csv')
-
-df.shape
-
-df.head()
-
-df.columns
-
-df.info()
-
-df.isnull().sum()
-
-df.drop(['Email No.'], axis=1, inplace=True)
-
-X = df.drop(['Prediction'], axis=1)
-y = df['Prediction']
-
-from sklearn.preprocessing import scale
-
-X = scale(X)
-
-# Split into train and test
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.3, random_state=42
-)
-
-y_train = y_train.values.ravel()
-y_test = y_test.values.ravel()
-
-from sklearn.neighbors import KNeighborsClassifier
-
-knn = KNeighborsClassifier(n_neighbors=6)
-
-knn.fit(X_train, y_train)
-
-y_pred = knn.predict(X_test)
-
-print("Prediction", y_pred)
-
-print("KNN accuracy = ", metrics.accuracy_score(y_test, y_pred))
-
-print("Confusion matrix", metrics.confusion_matrix(y_test, y_pred))
-
-# SVM
-# Cost C = 1
-model = SVC(C=1)
-
-# Fit
-model.fit(X_train, y_train)
-
-# Predict
-y_pred = model.predict(X_test)
-
-metrics.confusion_matrix(y_true=y_test, y_pred=y_pred)
-
-print("SVM accuracy = ", metrics.accuracy_score(y_test, y_pred))
-
-from sklearn.svm import SVC
-from sklearn.svm import LinearSVC
-from sklearn.metrics import accuracy_score
-import math
-import time
-
-# Polynomial kernel
-start = time.time()
-
-model = SVC(kernel='poly', C=2)
-model.fit(X_train, y_train)
-
-pred = model.predict(X_test)
-acc = accuracy_score(y_test, pred)
-
-print(round(acc*100, 1), '%')
-
-end = time.time()
-print(f"{end - start:.5f} sec")
-
-# RBF kernel
-start = time.time()
-
-model = SVC(kernel='rbf', C=2)
-model.fit(X_train, y_train)
-
-pred = model.predict(X_test)
-acc = accuracy_score(y_test, pred)
-
-print(round(acc*100, 1), '%')
-
-end = time.time()
-print(f"{end - start:.5f} sec")
-
-# Sigmoid kernel
-start = time.time()
-
-model = SVC(kernel='sigmoid', C=2)
-model.fit(X_train, y_train)
-
-pred = model.predict(X_test)
-acc = accuracy_score(y_test, pred)
-
-print(round(acc*100, 1), '%')
-
-end = time.time()
-print(f"{end - start:.5f} sec")
-
-# Linear SVC
-start = time.time()
-
-model = LinearSVC(C=2)
-model.fit(X_train, y_train)
-
-pred = model.predict(X_test)
-acc = accuracy_score(y_test, pred)
-
-print(round(acc*100, 1), '%')
-
-end = time.time()
-print(f"{end - start:.5f} sec")
-
-# MinMaxScaler
-from sklearn.preprocessing import MinMaxScaler
-
-x = df.drop('Prediction', axis=1)
-y = df['Prediction']
-
-scaler = MinMaxScaler()
-x = scaler.fit_transform(x)
-
-X_train, X_test, y_train, y_test = train_test_split(
-    x, y, test_size=0.2, random_state=100
-)
-
-print('======poly======')
-
-start = time.time()
-
-model = SVC(kernel='poly', C=3)
-model.fit(X_train, y_train)
-
-pred = model.predict(X_test)
-acc = accuracy_score(y_test, pred)
-
-print(round(acc*100, 1), '%')
-
-end = time.time()
-print(f"{end - start:.5f} sec")
-
-print('=======rbf=======')
-
-start = time.time()
-
-model = SVC(kernel='rbf', C=3)
-model.fit(X_train, y_train)
-
-pred = model.predict(X_test)
-acc = accuracy_score(y_test, pred)
-
-print(round(acc*100, 1), '%')
-
-end = time.time()
-print(f"{end - start:.5f} sec")
-
-print('=====sigmoid=====')
-
-start = time.time()
-
-model = SVC(kernel='sigmoid', C=3)
-model.fit(X_train, y_train)
-
-pred = model.predict(X_test)
-acc = accuracy_score(y_test, pred)
-
-print(round(acc*100, 1), '%')
-
-end = time.time()
-print(f"{end - start:.5f} sec")
-
-print('=====LinearSVC=====')
-
-start = time.time()
-
-model = LinearSVC(C=3)
-model.fit(X_train, y_train)
-
-pred = model.predict(X_test)
-acc = accuracy_score(y_test, pred)
-
-print(round(acc*100, 1), '%')
-
-end = time.time()
-print(f"{end - start:.5f} sec")
-
-# RobustScaler
-from sklearn.preprocessing import RobustScaler
-
-x = df.drop('Prediction', axis=1)
-y = df['Prediction']
-
-scaler = RobustScaler()
-x = scaler.fit_transform(x)
-
-X_train, X_test, y_train, y_test = train_test_split(
-    x, y, test_size=0.2, random_state=100
-)
-
-print('======poly======')
-
-start = time.time()
-
-model = SVC(kernel='poly')
-model.fit(X_train, y_train)
-
-pred = model.predict(X_test)
-acc = accuracy_score(y_test, pred)
-
-print(round(acc*100, 1), '%')
-
-end = time.time()
-print(f"{end - start:.5f} sec")
-
-print('=======rbf=======')
-
-start = time.time()
-
-model = SVC(kernel='rbf', C=2)
-model.fit(X_train, y_train)
-
-pred = model.predict(X_test)
-acc = accuracy_score(y_test, pred)
-
-print(round(acc*100, 1), '%')
-
-end = time.time()
-print(f"{end - start:.5f} sec")
-
-print('=====sigmoid=====')
-
-start = time.time()
-
-model = SVC(kernel='sigmoid')
-model.fit(X_train, y_train)
-
-pred = model.predict(X_test)
-acc = accuracy_score(y_test, pred)
-
-print(round(acc*100, 1), '%')
-
-end = time.time()
-print(f"{end - start:.5f} sec")
-
-print('=====LinearSVC=====')
-
-start = time.time()
-
-model = LinearSVC(C=2)
-model.fit(X_train, y_train)
-
-pred = model.predict(X_test)
-acc = accuracy_score(y_test, pred)
-
-print(round(acc*100, 1), '%')
-
-end = time.time()
-print(f"{end - start:.5f} sec")
-
-# StandardScaler
 from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
 
-x = df.drop('Prediction', axis=1)
-y = df['Prediction']
+
+df = pd.read_csv("emails.csv")
+print(df.shape)
+print("Missing values:", df.isnull().sum().sum())
+print("Duplicate rows:", df.duplicated().sum())
+df[["Email No.", "the", "to", "ect", "and", "Prediction"]].head()
+
+
+df = df.dropna().drop_duplicates()
+print("Shape after preprocessing:", df.shape)
+sns.countplot(x=df["Prediction"]); plt.title("0 = Not Spam, 1 = Spam"); plt.show()
+print(df["Prediction"].value_counts())
+
+
+X = df.drop(["Email No.", "Prediction"], axis=1)
+y = df["Prediction"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+print("Training:", X_train.shape, "| Testing:", X_test.shape)
+
 
 scaler = StandardScaler()
-x = scaler.fit_transform(x)
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
 
-X_train, X_test, y_train, y_test = train_test_split(
-    x, y, test_size=0.2, random_state=100
-)
 
-print('======poly======')
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+knn_pred = knn.predict(X_test)
 
-start = time.time()
 
-model = SVC(kernel='poly')
-model.fit(X_train, y_train)
+svm = SVC(kernel='linear', random_state=42)
+svm.fit(X_train, y_train)
+svm_pred = svm.predict(X_test)
 
-pred = model.predict(X_test)
-acc = accuracy_score(y_test, pred)
 
-print(round(acc*100, 1), '%')
+def report(name, y_true, y_pred, cmap):
+    acc = accuracy_score(y_true, y_pred)
+    res = {"Algorithm": name, "Accuracy": acc*100, "Error Rate": (1-acc)*100,
+           "Precision": precision_score(y_true, y_pred, zero_division=0)*100,
+           "Recall": recall_score(y_true, y_pred, zero_division=0)*100,
+           "F1 Score": f1_score(y_true, y_pred, zero_division=0)*100}
+    cm = confusion_matrix(y_true, y_pred)
+    print(f"{name} PERFORMANCE")
+    for k, v in res.items():
+        if k != "Algorithm": print(f"  {k}: {v:.2f} %")
+    print("  Confusion Matrix:\n", cm, "\n")
+    sns.heatmap(cm, annot=True, fmt="d", cmap=cmap)
+    plt.xlabel("Predicted Values"); plt.ylabel("Actual Values"); plt.title(f"{name} Confusion Matrix")
+    plt.show()
+    return res
 
-end = time.time()
-print(f"{end - start:.5f} sec")
 
-print('=======rbf=======')
+knn_res = report("KNN", y_test, knn_pred, "Blues")
+svm_res = report("SVM", y_test, svm_pred, "Greens")
 
-start = time.time()
 
-model = SVC(kernel='rbf')
-model.fit(X_train, y_train)
+comparison = pd.DataFrame([knn_res, svm_res])
+print(comparison.round(2))
+comparison.plot(x="Algorithm", y=["Accuracy", "Precision", "Recall", "F1 Score"], kind="bar")
+plt.ylabel("Score (%)"); plt.title("KNN vs SVM Performance Comparison"); plt.xticks(rotation=0)
+plt.tight_layout(); plt.show()
 
-pred = model.predict(X_test)
-acc = accuracy_score(y_test, pred)
 
-print(round(acc*100, 1), '%')
-
-end = time.time()
-print(f"{end - start:.5f} sec")
-
-print('=====sigmoid=====')
-
-start = time.time()
-
-model = SVC(kernel='sigmoid')
-model.fit(X_train, y_train)
-
-pred = model.predict(X_test)
-acc = accuracy_score(y_test, pred)
-
-print(round(acc*100, 1), '%')
-
-end = time.time()
-print(f"{end - start:.5f} sec")
-
-print('=====LinearSVC=====')
-
-start = time.time()
-
-model = LinearSVC()
-model.fit(X_train, y_train)
-
-pred = model.predict(X_test)
-acc = accuracy_score(y_test, pred)
-
-print(round(acc*100, 1), '%')
-
-end = time.time()
-print(f"{end - start:.5f} sec")
-
-# Classification report and model comparison
-cr2 = classification_report(y_test, y_pred2)
-
-pd.DataFrame({
-    'Models': ['KNN', 'SVC'],
-    'ACC': [accuracy1, accuracy2]
-})
-
-from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
+best = comparison.loc[comparison["F1 Score"].idxmax(), "Algorithm"]
+print(f"{best} performs better based on F1 Score.")
