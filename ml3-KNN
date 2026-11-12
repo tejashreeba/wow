@@ -1,72 +1,64 @@
 
 import pandas as pd
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
-%matplotlib inline
-
-data = pd.read_csv('diabetes.csv')
-
-data.head()
-
-data.corr()['Outcome']
-
-sns.heatmap(data.corr(), annot=True)
-
-X = data.drop('Outcome', axis=1)
-
-y = data['Outcome']
-
+import seaborn as sns
 from sklearn.model_selection import train_test_split
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-
 from sklearn.preprocessing import StandardScaler
-
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, classification_report
+
+df = pd.read_csv("diabetes.csv")
+print(df.shape)
+df.head()
+
+sns.countplot(x=df["Outcome"])
+plt.xlabel("Diabetes Outcome"); plt.ylabel("Number of Records"); plt.title("Class Distribution")
+plt.show()
+print(df.isnull().sum())
+
+# Zeros in these columns are impossible values => treat as missing and fill with the median
+cols = ["Glucose", "BloodPressure", "SkinThickness", "Insulin", "BMI"]
+print((df[cols] == 0).sum())
+df[cols] = df[cols].replace(0, np.nan)
+df[cols] = df[cols].fillna(df[cols].median())
+print("Zeros left:", (df[cols] == 0).sum().sum())
+
+X = df.drop("Outcome", axis=1)
+y = df["Outcome"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+print("Training data:", X_train.shape, "| Testing data:", X_test.shape)
 
 scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
 
-knn = KNeighborsClassifier()
+# Choose K: accuracy on test data for different values of K
+ks = range(1, 26)
+accs = [accuracy_score(y_test, KNeighborsClassifier(n_neighbors=k).fit(X_train, y_train).predict(X_test)) for k in ks]
+plt.plot(ks, accs, marker='o'); plt.xlabel("K"); plt.ylabel("Accuracy"); plt.title("Accuracy vs K"); plt.show()
+print("Accuracy with K=5:", accs[4])
 
-operations = [('scaler', scaler), ('knn', knn)]
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+y_pred = knn.predict(X_test)
+print(y_pred)
 
-from sklearn.pipeline import Pipeline
+cm = confusion_matrix(y_test, y_pred)
+print("Confusion Matrix:\n", cm)
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+plt.xlabel("Predicted Values"); plt.ylabel("Actual Values"); plt.title("Confusion Matrix")
+plt.show()
 
-pipe = Pipeline(operations)
-
-from sklearn.model_selection import GridSearchCV
-
-k_values = list(range(1, 20))
-
-param_grid = {'knn__n_neighbors':k_values}
-
-full_classifier = GridSearchCV(pipe, param_grid, cv=5, scoring='accuracy')
-
-full_classifier.fit(X_train, y_train)
-
-full_classifier.best_estimator_.get_params()
-
-y_pred = full_classifier.predict(X_test)
-y_pred
-
-from sklearn.metrics import confusion_matrix, classification_report, accuracy_score,precision_score,recall_score
-
-accuracy_score(y_test, y_pred)
-
-error_rate= 1-accuracy_score(y_test, y_pred)
-error_rate
-
-cm=confusion_matrix(y_test, y_pred)
-cm
-
-from sklearn.metrics import ConfusionMatrixDisplay
-CMD=ConfusionMatrixDisplay(cm).plot()
-
-precision=precision_score(y_test,y_pred)
-precision
-
-recall=recall_score(y_test,y_pred)
-recall
-
+accuracy = accuracy_score(y_test, y_pred)
+error_rate = 1 - accuracy
+precision = precision_score(y_test, y_pred, zero_division=0)
+recall = recall_score(y_test, y_pred, zero_division=0)
+print("Accuracy  :", round(accuracy*100, 2), "%")
+print("Error Rate:", round(error_rate*100, 2), "%")
+print("Precision :", round(precision*100, 2), "%")
+print("Recall    :", round(recall*100, 2), "%")
+print()
 print(classification_report(y_test, y_pred))
+
+pd.DataFrame({"Actual": y_test.values, "Predicted": y_pred}).head(10)
