@@ -1,4 +1,6 @@
+
 def is_safe(board, row, col, n):
+
     for i in range(row):
         if board[i][col] == 1:
             return False
@@ -21,6 +23,7 @@ def is_safe(board, row, col, n):
 
 
 def solve(board, row, n):
+
     if row == n:
         return True
 
@@ -40,12 +43,17 @@ n = int(input("Enter N: "))
 board = [[0]*n for i in range(n)]
 
 if n > 0:
-    board[0][0] = 1
+    for col in range(n):
+        board[0][col] = 1
 
-    if solve(board, 1, n):
-        print("N Queens Matrix:")
-        for row in board:
-            print(*row)
+        if solve(board, 1, n):
+            print("N Queens Matrix:")
+            for row in board:
+                print(*row)
+            break
+
+        board[0][col] = 0
+
     else:
         print("No solution exists")
 else:
