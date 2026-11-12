@@ -1,151 +1,173 @@
 
+# 1. Import libraries
 import pandas as pd
 import numpy as np
 import seaborn as sns
-import matplotlib as plt
-
-data = pd.read_csv("uber.csv")
-
-data
-data.head()
-data.info()
-data.columns
-
-data = data.drop(['Unnamed: 0'], axis=1)
-data = data.drop(['key'], axis=1)
-
-data.head()
-data.shape
-data.dtypes
-data.isnull().sum()
-
-data['dropoff_longitude'].fillna(value=data['dropoff_longitude'].mean(), inplace=True)
-data['dropoff_latitude'].fillna(value=data['dropoff_latitude'].median(), inplace=True)
-
-data.isnull().sum()
-data.dtypes
-
-data.pickup_datetime = pd.to_datetime(data.pickup_datetime, errors='coerce')
-
-data.dtypes
-
-data = data.assign(hour=data.pickup_datetime.dt.hour,
-                   day=data.pickup_datetime.dt.day,
-                   month=data.pickup_datetime.dt.month,
-                   year=data.pickup_datetime.dt.year,
-                   dayofweek=data.pickup_datetime.dt.dayofweek)
-
-data.head()
-
-data = data.drop(['pickup_datetime'], axis=1)
-
-data.head()
-
-# 2 identify outliers
-data.plot(kind="box", subplots=True, layout=(7,2), figsize=(15,20))
-
-# Using the InterQuartile Range to fill the values
-def remove_outlier(data1, col):
-    Q1 = data1[col].quantile(0.25)
-    Q3 = data1[col].quantile(0.75)
-    IQR = Q3 - Q1
-    lower_whisker = Q1 - 1.5 * IQR
-    upper_whisker = Q3 + 1.5 * IQR
-    data[col] = np.clip(data1[col], lower_whisker, upper_whisker)
-    return data1
-
-def treat_outliers_all(data1, col_list):
-    for c in col_list:
-        data1 = remove_outlier(data, c)
-    return data1
-
-data = treat_outliers_all(data, data.iloc[:, 0::])
-
-data.plot(kind="box", subplots=True, layout=(7,2), figsize=(15,20))
-
-# 3 check correlation
-corr = data.corr(numeric_only=True)
-plt.figure(figsize=(12,8))
-sns.heatmap(corr,annot=True,cmap="Blues", fmt='.2f')
-plt.show()
-
-from math import *
-
-# function to calculate the travel distance from the longitudes and latitudes
-def distance_transform(longitude1, latitude1, longitude2, latitude2):
-    travel_dist = []
-
-    for pos in range(len(longitude1)):
-        long1, lati1, long2, lati2 = map(
-            radians,
-            [longitude1[pos], latitude1[pos], longitude2[pos], latitude2[pos]]
-        )
-        dist_long = long2 - long1
-        dist_lati = lati2 - lati1
-        a = sin(dist_lati/2)**2 + cos(lati1) * cos(lati2) * sin(dist_long/2)**2
-        c = 2 * asin(sqrt(a)) * 6371
-        travel_dist.append(c)
-
-    return travel_dist
-
-data['dist_travel_km'] = distance_transform(
-    data['pickup_longitude'].to_numpy(),
-    data['pickup_latitude'].to_numpy(),
-    data['dropoff_longitude'].to_numpy(),
-    data['dropoff_latitude'].to_numpy()
-)
-
-data.head()
-
-# Linear Regression
-x = data[['pickup_longitude', 'pickup_latitude', 'dropoff_longitude',
-          'dropoff_latitude', 'passenger_count', 'hour', 'day',
-          'month', 'year', 'dayofweek', 'dist_travel_km']]
-
-y = data['fare_amount']
+import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
-
-X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33)
-
 from sklearn.linear_model import LinearRegression
-
-regression = LinearRegression()
-
-regression.fit(X_train, y_train)
-
-regression.intercept_  # To find the linear intercept
-
-regression.coef_  # To find the linear coefficient
-
-pred = regression.predict(X_test)
-pred
-
-from sklearn.metrics import r2_score
-
-r2_score(y_test, pred)
-
-MSE = mean_squared_error(y_test, pred)
-MSE
-
-RMSE = np.sqrt(MSE)
-RMSE
-
-# RANDOM FOREST
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 
-rf = RandomForestRegressor(n_estimators=10)
+
+# 2. Load dataset
+df = pd.read_csv("uber.csv")
+
+
+# 3. Remove missing values
+df = df.dropna()
+
+
+# 4. Check missing values
+print(df.isnull().sum())
+
+
+# 5. Remove unnecessary columns
+df = df.drop("Unnamed: 0", axis=1)
+df = df.drop("key", axis=1)
+
+
+# 6. Convert pickup_datetime into datetime format
+df["pickup_datetime"] = pd.to_datetime(
+    df["pickup_datetime"], errors="coerce"
+)
+
+
+# 7. Extract hour and day
+df["hour"] = df["pickup_datetime"].dt.hour
+df["mainday"] = df["pickup_datetime"].dt.day
+
+
+# 8. Remove original datetime column
+df = df.drop("pickup_datetime", axis=1)
+
+
+# 9. Remove invalid fare and passenger records
+df = df[df["fare_amount"] > 0]
+df = df[df["passenger_count"] > 0]
+
+
+# 10. Visualize outliers using boxplot
+sns.boxplot(x=df["fare_amount"])
+plt.show()
+
+
+# 11. Calculate IQR
+q1 = df["fare_amount"].quantile(0.25)
+q3 = df["fare_amount"].quantile(0.75)
+
+IQR = q3 - q1
+
+lower = q1 - 1.5 * IQR
+upper = q3 + 1.5 * IQR
+
+
+# 12. Remove outliers
+df = df[
+    (df["fare_amount"] >= lower) &
+    (df["fare_amount"] <= upper)
+]
+
+# Alternative method using clipping
+# df["fare_amount"] = df["fare_amount"].clip(lower, upper)
+
+
+# 13. Draw correlation heatmap
+plt.figure(figsize=(10, 6))
+
+sns.heatmap(
+    df.corr(numeric_only=True),
+    annot=True,
+    cmap="coolwarm"
+)
+
+plt.show()
+
+
+# 14. Check correlation with fare amount
+corr = df.corr(numeric_only=True)
+print(corr["fare_amount"])
+
+
+# 15. Convert latitude and longitude into radians
+lat1 = np.radians(df["pickup_latitude"])
+lat2 = np.radians(df["dropoff_latitude"])
+
+lon1 = np.radians(df["pickup_longitude"])
+lon2 = np.radians(df["dropoff_longitude"])
+
+
+# 16. Calculate distance using Haversine formula
+dlat = lat2 - lat1
+dlon = lon2 - lon1
+
+a = (
+    np.sin(dlat / 2) ** 2
+    + np.cos(lat1) * np.cos(lat2)
+    * np.sin(dlon / 2) ** 2
+)
+
+c = 2 * np.arcsin(np.sqrt(a))
+
+df["distance_km"] = 6371 * c
+
+
+# 17. Separate input and output
+X = df.drop("fare_amount", axis=1)
+y = df["fare_amount"]
+
+
+# 18. Split dataset into training and testing data
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, random_state=42, test_size=0.2
+)
+
+
+# 19. Linear Regression model
+lr = LinearRegression()
+
+lr.fit(X_train, y_train)
+
+lr_pred = lr.predict(X_test)
+
+print(lr_pred)
+
+print(lr.intercept_)
+
+
+# 20. Random Forest Regression model
+rf = RandomForestRegressor(
+    n_estimators=10,
+    random_state=42
+)
+
 rf.fit(X_train, y_train)
 
-pred = rf.predict(X_test)
-pred
+rf_pred = rf.predict(X_test)
 
-R = r2_score(y_test, pred)
-R
+print(rf_pred)
 
-MSE = mean_squared_error(y_test, pred)
-MSE
 
-RMSE = np.sqrt(MSE)
-RMSE
+# 21. Compare both models
+results = pd.DataFrame({
+    "Model": ["LR", "RF"],
+
+    "R2": [
+        r2_score(y_test, lr_pred),
+        r2_score(y_test, rf_pred)
+    ],
+
+    "MAE": [
+        mean_absolute_error(y_test, lr_pred),
+        mean_absolute_error(y_test, rf_pred)
+    ],
+
+    "RMSE": [
+        np.sqrt(mean_squared_error(y_test, lr_pred)),
+        np.sqrt(mean_squared_error(y_test, rf_pred))
+    ]
+})
+
+print("\nModel Comparison:")
+print(results)
