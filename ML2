@@ -1,113 +1,96 @@
 
 import pandas as pd
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
-import zipfile
-import cv2
-import plotly.express as px
 
-from sklearn.preprocessing import StandardScaler, normalize
+from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 
-%matplotlib inline
 
-df = pd.read_csv('sales_data_sample.csv', encoding='unicode_escape', parse_dates=['ORDERDATE'])
-df.head()
+from google.colab import files
 
-df.isnull().sum()
+uploaded = files.upload()
 
-df_drop = ['ADDRESSLINE1', 'ADDRESSLINE2', 'POSTALCODE', 'CITY', 'TERRITORY', 'PHONE', 'STATE', 'CONTACTFIRSTNAME', 'CONTACTLASTNAME', 'CUSTOMERNAME', 'ORDERNUMBER']
-df = df.drop(df_drop, axis=1)
-df.head(3)
 
-df.shape
+df = pd.read_csv("sales_data_sample.csv", encoding="latin1")
 
-df.isna().sum()
+print(df.head())
+print(df.shape)
 
-def barplot_visualization(x):
-    fig = plt.Figure(figsize=(12, 6))
-    fig = px.bar(
-        x=df[x].value_counts().index,
-        y=df[x].value_counts(),
-        color=df[x].value_counts().index,
-        height=600
-    )
-    fig.show()
 
-barplot_visualization('COUNTRY')
+print("Duplicate rows:", df.duplicated().sum())
 
-barplot_visualization('STATUS');
+df = df.drop_duplicates()
 
-df.drop(columns=['STATUS'], axis=1, inplace=True)
 
-print('Columns resume: ', df.shape[1])
+print(df.isnull().sum())
 
-barplot_visualization('PRODUCTLINE')
 
-barplot_visualization('DEALSIZE')
+X = df[["QUANTITYORDERED", "PRICEEACH", "SALES"]]
 
-def dummies(x):
-    dummy = pd.get_dummies(df[x])
-    df.drop(columns=x, inplace=True)
-    return pd.concat([df, dummy], axis=1)
+X = X.dropna()
 
-df = dummies('COUNTRY')
+print(X.head())
 
-df = dummies('PRODUCTLINE')
 
-df = dummies('DEALSIZE')
+plt.scatter(X["QUANTITYORDERED"], X["SALES"])
 
-df.head()
+plt.xlabel("Quantity Ordered")
+plt.ylabel("Sales")
+plt.title("Original Sales Data")
 
-y = pd.Categorical(df['PRODUCTCODE'])
-y
+plt.show()
 
-df['PRODUCTCODE'] = pd.Categorical(df['PRODUCTCODE']).codes
-
-df.head()
-
-df_group = df.groupby(by='ORDERDATE').sum()
-fig = px.line(x=df_group.index, y=df_group.SALES, title='sales_peak')
-fig.show();
-
-df.drop('ORDERDATE', axis=1, inplace=True)
-
-df.drop('QTR_ID', axis=1, inplace=True)
-
-df.shape
 
 scaler = StandardScaler()
-df_scaled = scaler.fit_transform(df)
+
+X_scaled = scaler.fit_transform(X)
+
 
 scores = []
-range_values = range(1, 15)
 
-for i in range_values:
-    kmeans = KMeans(n_clusters=i)
-    kmeans.fit(df_scaled)
+for i in range(1, 11):
+    kmeans = KMeans(n_clusters=i, random_state=42, n_init=10)
+    kmeans.fit(X_scaled)
     scores.append(kmeans.inertia_)
 
-plt.plot(scores, 'bx-')
-plt.title('Finding right number of clusters')
-plt.xlabel('Clusters')
-plt.ylabel('scores')
-plt.show();
+plt.plot(range(1, 11), scores, marker='o')
 
-kmeans = KMeans(4)
-kmeans.fit(df_scaled)
+plt.xlabel("Number of Clusters")
+plt.ylabel("WCSS")
+plt.title("Elbow Method")
 
-labels = kmeans.labels_
-labels
+plt.show()
 
-kmeans.cluster_centers_.shape
 
-cluster_centers = pd.DataFrame(data=kmeans.cluster_centers_, columns=[df.columns])
-cluster_centers
+kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
 
-cluster_centers = scaler.inverse_transform(cluster_centers)
-cluster_centers = pd.DataFrame(data=cluster_centers, columns=[df.columns])
-cluster_centers
+labels = kmeans.fit_predict(X_scaled)
 
-sales_of_cluster = pd.concat([df, pd.DataFrame({'cluster': labels})], axis=1)
-sales_of_cluster.head()
+X["Cluster"] = labels
+
+print(X.head())
+
+
+print("Cluster Centers:")
+print(kmeans.cluster_centers_)
+
+
+plt.scatter(X["QUANTITYORDERED"], X["SALES"],
+            c=labels, cmap="rainbow")
+
+plt.xlabel("Quantity Ordered")
+plt.ylabel("Sales")
+plt.title("K-Means Clustering")
+
+plt.show()
+
+
+print("Records in each cluster:")
+print(X["Cluster"].value_counts())
+
+
+print(X.head(10))
+
+print("\nNumber of records in each cluster:")
+print(X["Cluster"].value_counts())
